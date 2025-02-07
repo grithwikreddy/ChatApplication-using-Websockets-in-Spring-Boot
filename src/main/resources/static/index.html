@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat App</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<h1>Chat Application</h1>
+<div>
+    <label>Username:</label>
+    <input id="username" placeholder="Your name" /><br/>
+    <label>Message:</label>
+    <input id="message" placeholder="Type a message" />
+    <button onclick="sendMessage()">Send</button>
+</div>
+<div id="chat"></div>
+
+<script>
+    let stompClient = null;
+    function connect() {
+        const socket = new SockJS('/chat');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function () {
+            stompClient.subscribe('/topic/messages', function (messageOutput) {
+                showMessage(JSON.parse(messageOutput.body));
+            });
+        });
+    }
+    function sendMessage() {
+         const us = document.getElementById('username').value.trim();
+         const mes = document.getElementById('message').value.trim();
+            stompClient.send("/app/send", {}, JSON.stringify({us,mes}));
+            document.getElementById('message').value = '';
+    }
+    function showMessage(message) {
+        const chatDiv = document.getElementById('chat');
+        const newMessage = document.createElement('div');
+        newMessage.textContent = `${message.us}: ${message.mes}`;
+        chatDiv.appendChild(newMessage);
+    }
+    connect();
+</script>
+</body>
+</html>
